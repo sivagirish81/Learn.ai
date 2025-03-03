@@ -34,7 +34,7 @@ source venv/bin/activate  # On Windows use: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-3. Make sure Elasticsearch is running on localhost:9200
+3. Make sure Elasticsearch is running on 127.0.0.1:9200
 
 4. Initialize the database:
 ```bash
@@ -61,7 +61,7 @@ npm start
 
 ## Usage
 
-1. Open your browser and navigate to http://localhost:3000
+1. Open your browser and navigate to http://127.0.0.1:3000
 2. Use the search bar to find AI resources
 3. Filter results by category and tags
 4. Click on resources to view details

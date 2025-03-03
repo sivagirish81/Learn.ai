@@ -7,7 +7,7 @@ import sys
 
 def get_elasticsearch_client():
     """Get Elasticsearch client with connection retry"""
-    es = Elasticsearch(['http://localhost:9200'])
+    es = Elasticsearch(['http://127.0.0.1:9200'])
     retry_count = 0
     max_retries = 3
     
@@ -19,7 +19,7 @@ def get_elasticsearch_client():
         except ConnectionError:
             retry_count += 1
             if retry_count == max_retries:
-                print("Error: Could not connect to Elasticsearch. Please make sure Elasticsearch is running on http://localhost:9200")
+                print("Error: Could not connect to Elasticsearch. Please make sure Elasticsearch is running on http://127.0.0.1:9200")
                 print("\nTo install and run Elasticsearch:")
                 print("1. Download Elasticsearch from https://www.elastic.co/downloads/elasticsearch")
                 print("2. Extract the downloaded file")

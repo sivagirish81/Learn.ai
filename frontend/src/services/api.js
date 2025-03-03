@@ -1,7 +1,7 @@
 import axios from 'axios';
 
 const api = axios.create({
-  baseURL: 'http://localhost:5000',
+  baseURL: 'http://127.0.0.1:5000',
   headers: {
     'Content-Type': 'application/json'
   }
@@ -42,11 +42,11 @@ export const submitResource = (data) => api.post('/api/resources', data);
 export const updateResource = (id, data) => api.put(`/api/resources/${id}`, data);
 export const deleteResource = (id) => api.delete(`/api/resources/${id}`);
 export const getPendingResources = (page = 1, size = 10) => 
-  api.get('/api/resources/pending', { params: { page, size } });
+  api.get('/api/admin/pending-resources', { params: { page, size } });
 export const approveResource = (id, data) => 
-  api.post(`/api/resources/${id}/approve`, data);
+  api.post(`/api/admin/resources/${id}/approve`, data);
 export const rejectResource = (id, data) => 
-  api.post(`/api/resources/${id}/reject`, data);
+  api.post(`/api/admin/resources/${id}/reject`, data);
 
 // Bookmark API
 export const getBookmarks = () => api.get('/api/bookmarks');

@@ -12,34 +12,49 @@ import {
   MenuItem,
   Chip,
   Alert,
-  AlertTitle
+  FormHelperText
 } from '@mui/material';
 import { Send, Clear } from '@mui/icons-material';
-import { submitResource } from '../services/api';
-
-const VALID_CATEGORIES = [
-  'tutorial',
-  'research_paper',
-  'github_repository',
-  'course',
-  'book',
-  'video',
-  'blog_post'
-];
+import { useAuth } from '../contexts/AuthContext';
 
 const ResourceSubmission = () => {
+  const { token } = useAuth();
   const [formData, setFormData] = useState({
     title: '',
     description: '',
     url: '',
     category: '',
     tags: [],
-    content: ''
+    resource_type: '',
+    author: ''
   });
   const [tagInput, setTagInput] = useState('');
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
-  const [success, setSuccess] = useState(false);
+  const [message, setMessage] = useState({ type: '', text: '' });
+
+  const resourceTypes = [
+    'Tutorial',
+    'Research Paper',
+    'GitHub Repository',
+    'Course',
+    'Blog Post',
+    'Documentation',
+    'Video',
+    'Book',
+    'Tool'
+  ];
+
+  const categories = [
+    'Machine Learning',
+    'Deep Learning',
+    'Natural Language Processing',
+    'Computer Vision',
+    'Reinforcement Learning',
+    'AI Ethics',
+    'MLOps',
+    'Data Science',
+    'Neural Networks'
+  ];
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -73,23 +88,57 @@ const ResourceSubmission = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setLoading(true);
-    setError(null);
-    setSuccess(false);
+    setMessage({ type: '', text: '' });
+
+    // Validate required fields
+    const requiredFields = ['title', 'url', 'description', 'resource_type', 'category'];
+    const missingFields = requiredFields.filter(field => !formData[field]);
+    
+    if (missingFields.length > 0) {
+      setMessage({
+        type: 'error',
+        text: `Please fill in the following required fields: ${missingFields.join(', ')}`
+      });
+      return;
+    }
 
     try {
-      await submitResource(formData);
-      setSuccess(true);
-      setFormData({
-        title: '',
-        description: '',
-        url: '',
-        category: '',
-        tags: [],
-        content: ''
+      const response = await fetch('http://127.0.0.1:5000/api/resources', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(formData)
       });
-    } catch (err) {
-      setError(err.message || 'Failed to submit resource');
-      console.error(err);
+
+      const data = await response.json();
+
+      if (response.ok) {
+        setMessage({
+          type: 'success',
+          text: 'Resource submitted successfully! It will be reviewed by our team.'
+        });
+        setFormData({
+          title: '',
+          description: '',
+          url: '',
+          category: '',
+          tags: [],
+          resource_type: '',
+          author: ''
+        });
+      } else {
+        setMessage({
+          type: 'error',
+          text: data.error || 'Failed to submit resource'
+        });
+      }
+    } catch (error) {
+      setMessage({
+        type: 'error',
+        text: 'Failed to connect to the server'
+      });
     } finally {
       setLoading(false);
     }
@@ -102,11 +151,11 @@ const ResourceSubmission = () => {
       url: '',
       category: '',
       tags: [],
-      content: ''
+      resource_type: '',
+      author: ''
     });
     setTagInput('');
-    setError(null);
-    setSuccess(false);
+    setMessage({ type: '', text: '' });
   };
 
   return (
@@ -116,17 +165,9 @@ const ResourceSubmission = () => {
       </Typography>
       
       <Paper elevation={3} sx={{ p: 3 }}>
-        {success && (
-          <Alert severity="success" sx={{ mb: 3 }}>
-            <AlertTitle>Success</AlertTitle>
-            Your resource has been submitted successfully and is pending review.
-          </Alert>
-        )}
-        
-        {error && (
-          <Alert severity="error" sx={{ mb: 3 }}>
-            <AlertTitle>Error</AlertTitle>
-            {error}
+        {message.text && (
+          <Alert severity={message.type} sx={{ mb: 3 }}>
+            {message.text}
           </Alert>
         )}
         
@@ -153,6 +194,23 @@ const ResourceSubmission = () => {
           />
           
           <FormControl fullWidth margin="normal" required>
+            <InputLabel>Resource Type</InputLabel>
+            <Select
+              name="resource_type"
+              value={formData.resource_type}
+              onChange={handleChange}
+              label="Resource Type"
+            >
+              {resourceTypes.map((type) => (
+                <MenuItem key={type} value={type}>
+                  {type}
+                </MenuItem>
+              ))}
+            </Select>
+            <FormHelperText>Required</FormHelperText>
+          </FormControl>
+          
+          <FormControl fullWidth margin="normal" required>
             <InputLabel>Category</InputLabel>
             <Select
               name="category"
@@ -160,12 +218,13 @@ const ResourceSubmission = () => {
               onChange={handleChange}
               label="Category"
             >
-              {VALID_CATEGORIES.map((category) => (
+              {categories.map((category) => (
                 <MenuItem key={category} value={category}>
-                  {category.replace('_', ' ').toUpperCase()}
+                  {category}
                 </MenuItem>
               ))}
             </Select>
+            <FormHelperText>Required</FormHelperText>
           </FormControl>
           
           <TextField
@@ -176,6 +235,15 @@ const ResourceSubmission = () => {
             label="Description"
             name="description"
             value={formData.description}
+            onChange={handleChange}
+            margin="normal"
+          />
+          
+          <TextField
+            fullWidth
+            label="Author"
+            name="author"
+            value={formData.author}
             onChange={handleChange}
             margin="normal"
           />
@@ -200,18 +268,6 @@ const ResourceSubmission = () => {
               />
             ))}
           </Box>
-          
-          <TextField
-            fullWidth
-            multiline
-            rows={6}
-            label="Additional Content (optional)"
-            name="content"
-            value={formData.content}
-            onChange={handleChange}
-            margin="normal"
-            helperText="You can add more details, code snippets, or any other relevant information"
-          />
           
           <Box sx={{ mt: 3, display: 'flex', gap: 2 }}>
             <Button

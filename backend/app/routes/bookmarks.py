@@ -9,8 +9,9 @@ bookmarks_bp = Blueprint('bookmarks', __name__)
 def get_bookmarks(current_user):
     """Get user's bookmarked resources"""
     try:
+        print("hisss")
         user = User.get(current_user['id'])
-        bookmarks = user.get_bookmarks()
+        bookmarks = User.get_bookmarks(user)
         return jsonify(bookmarks)
     except UserValidationError as e:
         return jsonify({'error': str(e)}), 400

@@ -5,29 +5,43 @@ from elasticsearch.exceptions import NotFoundError
 from urllib.parse import urlparse
 import re
 
-es = Elasticsearch(['http://localhost:9200'])
+es = Elasticsearch(['http://127.0.0.1:9200'])
 
 class ResourceValidationError(Exception):
     pass
 
 class Resource:
     index_name = 'ai_resources'
-    VALID_CATEGORIES = {
-        'tutorial', 'research_paper', 'github_repository', 
-        'course', 'book', 'video', 'blog_post'
-    }
+    
+    RESOURCE_TYPES = [
+        'Tutorial',
+        'Research Paper',
+        'GitHub Repository',
+        'Documentation',
+        'Course',
+        'Blog Post',
+        'Book',
+        'Video',
+        'Tool'
+    ]
 
-    def __init__(self, title, description, url, category, tags=None, 
-                 content=None, submitted_by=None, status='pending', 
-                 admin_notes=None):
+    def __init__(self, title, url, description, category, resource_type, tags=None, 
+                 author=None, publication_date=None, github_stars=None, 
+                 difficulty_level=None, prerequisites=None, submitted_by=None, 
+                 status='pending', admin_notes=None):
         self.title = title
-        self.description = description
         self.url = url
+        self.description = description
         self.category = category
+        self.resource_type = resource_type
         self.tags = tags or []
-        self.content = content
+        self.author = author
+        self.publication_date = publication_date
+        self.github_stars = github_stars
+        self.difficulty_level = difficulty_level
+        self.prerequisites = prerequisites or []
         self.submitted_by = submitted_by
-        self.status = status  # pending, approved, rejected
+        self.status = status
         self.admin_notes = admin_notes
         self.created_at = datetime.utcnow().isoformat()
         self.updated_at = self.created_at
@@ -56,11 +70,16 @@ class Resource:
         """Convert resource to dictionary"""
         return {
             'title': self.title,
-            'description': self.description,
             'url': self.url,
+            'description': self.description,
             'category': self.category,
+            'resource_type': self.resource_type,
             'tags': self.tags,
-            'content': self.content,
+            'author': self.author,
+            'publication_date': self.publication_date,
+            'github_stars': self.github_stars,
+            'difficulty_level': self.difficulty_level,
+            'prerequisites': self.prerequisites,
             'submitted_by': self.submitted_by,
             'status': self.status,
             'admin_notes': self.admin_notes,
@@ -72,11 +91,23 @@ class Resource:
     def create(cls, resource_data):
         """Create a new resource"""
         try:
+            # Validate required fields
+            required_fields = ['title', 'url', 'description', 'category', 'resource_type']
+            missing_fields = [field for field in required_fields if not resource_data.get(field)]
+            if missing_fields:
+                raise ResourceValidationError(f"Missing required fields: {', '.join(missing_fields)}")
+
+            # Validate resource type
+            if resource_data['resource_type'] not in cls.RESOURCE_TYPES:
+                raise ResourceValidationError(f"Invalid resource type. Must be one of: {', '.join(cls.RESOURCE_TYPES)}")
+
+            # Create resource instance
             resource = cls(**resource_data)
-            resource.validate()
-            
+
+            # Save to Elasticsearch
             result = es.index(index=cls.index_name, body=resource.to_dict())
             es.indices.refresh(index=cls.index_name)
+            
             return {'id': result['_id'], **resource.to_dict()}
         except ResourceValidationError as e:
             raise e
@@ -129,44 +160,62 @@ class Resource:
             raise ResourceValidationError(f"Failed to delete resource: {str(e)}")
 
     @classmethod
-    def search(cls, query=None, category=None, tags=None, status=None, 
-               submitted_by=None, page=1, size=10):
+    def search(cls, query=None, category=None, resource_type=None, tags=None, 
+              status=None, page=1, size=10):
         """Search for resources with filters"""
         try:
-            s = Search(using=es, index=cls.index_name)
+            must_conditions = []
             
-            # Build query
             if query:
-                s = s.query('multi_match', query=query, 
-                           fields=['title^2', 'description', 'content'])
-            
-            # Add filters
+                must_conditions.append({
+                    'multi_match': {
+                        'query': query,
+                        'fields': ['title^3', 'description^2', 'tags', 'author'],
+                        'type': 'best_fields',
+                        'fuzziness': 'AUTO'
+                    }
+                })
+
             if category:
-                s = s.filter('term', category=category)
+                must_conditions.append({'term': {'category.keyword': category}})
+                
+            if resource_type:
+                must_conditions.append({'term': {'resource_type.keyword': resource_type}})
+                
             if tags:
-                s = s.filter('terms', tags=tags)
+                must_conditions.append({'terms': {'tags.keyword': tags if isinstance(tags, list) else [tags]}})
+                
             if status:
-                s = s.filter('term', status=status)
-            if submitted_by:
-                s = s.filter('term', submitted_by=submitted_by)
+                must_conditions.append({'term': {'status.keyword': status}})
+            else:
+                # By default, only show approved resources
+                must_conditions.append({'term': {'status.keyword': 'approved'}})
+
+            body = {
+                'query': {
+                    'bool': {
+                        'must': must_conditions if must_conditions else [{'match_all': {}}]
+                    }
+                },
+                'sort': [
+                    {'_score': {'order': 'desc'}},
+                    {'created_at': {'order': 'desc'}}
+                ],
+                'from': (page - 1) * size,
+                'size': size
+            }
+
+            result = es.search(index=cls.index_name, body=body)
             
-            # Add pagination
-            s = s[(page-1)*size:page*size]
-            
-            # Execute search
-            response = s.execute()
-            
-            results = []
-            for hit in response:
-                result = hit.to_dict()
-                result['id'] = hit.meta.id
-                results.append(result)
+            resources = [{'id': hit['_id'], **hit['_source']} for hit in result['hits']['hits']]
+            total = result['hits']['total']['value']
             
             return {
-                'total': response.hits.total.value,
+                'resources': resources,
+                'total': total,
                 'page': page,
                 'size': size,
-                'results': results
+                'pages': (total + size - 1) // size
             }
         except Exception as e:
             raise ResourceValidationError(f"Failed to search resources: {str(e)}")
@@ -202,14 +251,30 @@ class Resource:
             es.indices.create(
                 index=cls.index_name,
                 body={
+                    'settings': {
+                        'analysis': {
+                            'analyzer': {
+                                'tag_analyzer': {
+                                    'type': 'custom',
+                                    'tokenizer': 'standard',
+                                    'filter': ['lowercase', 'stop']
+                                }
+                            }
+                        }
+                    },
                     'mappings': {
                         'properties': {
-                            'title': {'type': 'text'},
-                            'description': {'type': 'text'},
+                            'title': {'type': 'text', 'analyzer': 'standard'},
                             'url': {'type': 'keyword'},
+                            'description': {'type': 'text', 'analyzer': 'standard'},
                             'category': {'type': 'keyword'},
-                            'tags': {'type': 'keyword'},
-                            'content': {'type': 'text'},
+                            'resource_type': {'type': 'keyword'},
+                            'tags': {'type': 'text', 'analyzer': 'tag_analyzer', 'fielddata': True},
+                            'author': {'type': 'text'},
+                            'publication_date': {'type': 'date', 'format': 'strict_date_optional_time||epoch_millis'},
+                            'github_stars': {'type': 'integer'},
+                            'difficulty_level': {'type': 'keyword'},
+                            'prerequisites': {'type': 'keyword'},
                             'submitted_by': {'type': 'keyword'},
                             'status': {'type': 'keyword'},
                             'admin_notes': {'type': 'text'},

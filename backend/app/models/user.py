@@ -2,6 +2,10 @@ from datetime import datetime
 from werkzeug.security import generate_password_hash, check_password_hash
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
+import jwt
+
+# Add JWT configuration
+JWT_SECRET = 'your-secret-key'  # In production, use environment variable
 
 es = Elasticsearch(['http://localhost:9200'])
 
@@ -11,16 +15,37 @@ class UserValidationError(Exception):
 class User:
     index_name = 'ai_users'
     
-    def __init__(self, email, password=None, name=None, role='user'):
+    def __init__(self, email, password=None, name=None, role='user', bookmarks=None, created_at=None, password_hash=None):
         self.email = email
-        self.name = name
+        self.name = name or email.split('@')[0]
         self.role = role
-        self.bookmarks = []
-        self.created_at = datetime.utcnow().isoformat()
+        self.bookmarks = bookmarks or []
+        self.created_at = created_at or datetime.utcnow().isoformat()
         if password:
-            self.password_hash = generate_password_hash(password)
+            self.set_password(password)
+        elif password_hash:
+            self.password_hash = password_hash
+
+    @classmethod
+    def from_dict(cls, data):
+        """Create a User instance from a dictionary"""
+        if not data:
+            return None
+        return cls(
+            email=data['email'],
+            name=data.get('name'),
+            role=data.get('role', 'user'),
+            bookmarks=data.get('bookmarks', []),
+            created_at=data.get('created_at'),
+            password_hash=data.get('password_hash')
+        )
+
+    def set_password(self, password):
+        """Set the password hash using werkzeug's generate_password_hash"""
+        self.password_hash = generate_password_hash(password, method='pbkdf2:sha256')
 
     def verify_password(self, password):
+        """Verify the password using werkzeug's check_password_hash"""
         return check_password_hash(self.password_hash, password)
 
     def to_dict(self):
@@ -33,6 +58,12 @@ class User:
             'password_hash': self.password_hash
         }
 
+    def to_response_dict(self):
+        """Convert to dictionary for API response (excluding sensitive data)"""
+        data = self.to_dict()
+        data.pop('password_hash', None)
+        return data
+
     @classmethod
     def create(cls, user_data):
         """Create a new user"""
@@ -42,10 +73,19 @@ class User:
             if existing:
                 raise UserValidationError('Email already registered')
 
-            user = cls(**user_data)
+            # Create user instance
+            user = cls(
+                email=user_data['email'],
+                password=user_data['password'],
+                name=user_data.get('name'),
+                role=user_data.get('role', 'user')
+            )
+
+            # Save to Elasticsearch
             result = es.index(index=cls.index_name, body=user.to_dict())
             es.indices.refresh(index=cls.index_name)
-            return {'id': result['_id'], **user.to_dict()}
+            
+            return {'id': result['_id'], **user.to_response_dict()}
         except UserValidationError as e:
             raise e
         except Exception as e:
@@ -56,7 +96,10 @@ class User:
         """Get a user by ID"""
         try:
             result = es.get(index=cls.index_name, id=user_id)
-            return {'id': result['_id'], **result['_source']}
+            user = cls.from_dict(result['_source'])
+            if user:
+                return {'id': result['_id'], **user.to_dict()}
+            return None
         except NotFoundError:
             return None
         except Exception as e:
@@ -71,16 +114,20 @@ class User:
                 body={
                     'query': {
                         'term': {
-                            'email.keyword': email
+                            'email': email.lower()
                         }
                     }
                 }
             )
+            
             hits = result['hits']['hits']
             if hits:
-                return {'id': hits[0]['_id'], **hits[0]['_source']}
+                user = cls.from_dict(hits[0]['_source'])
+                if user:
+                    return {'id': hits[0]['_id'], **user.to_dict()}
             return None
         except Exception as e:
+            print(f"Error in get_by_email: {str(e)}")
             raise UserValidationError(f"Failed to get user: {str(e)}")
 
     @classmethod
@@ -121,20 +168,21 @@ class User:
     def get_bookmarks(self):
         """Get all bookmarked resources"""
         try:
-            if not self.bookmarks:
+            print(self)
+            if not self['bookmarks']:
                 return []
                 
             results = es.mget(
                 index='ai_resources',
-                body={'ids': self.bookmarks}
+                body={'ids': self['bookmarks']}
             )
             
             bookmarks = []
             for doc in results['docs']:
                 if doc['found']:
-                    bookmarks.append({'id': doc['_id'], **doc['_source']})
+                    self['bookmarks'].append({'id': doc['_id'], **doc['_source']})
             
-            return bookmarks
+            return self['bookmarks']
         except Exception as e:
             raise UserValidationError(f"Failed to get bookmarks: {str(e)}")
 
@@ -156,4 +204,24 @@ class User:
                         }
                     }
                 }
-            ) 
+            )
+
+    @classmethod
+    def get_from_token(cls, token):
+        """Get user from JWT token"""
+        try:
+            # Decode token
+            data = jwt.decode(token, JWT_SECRET, algorithms=['HS256'])
+            
+            # Get user by ID
+            user = cls.get(data['user_id'])
+            if not user:
+                raise UserValidationError('User not found')
+                
+            return user
+        except jwt.ExpiredSignatureError:
+            raise UserValidationError('Token has expired')
+        except jwt.InvalidTokenError:
+            raise UserValidationError('Invalid token')
+        except Exception as e:
+            raise UserValidationError(f'Token validation failed: {str(e)}') 

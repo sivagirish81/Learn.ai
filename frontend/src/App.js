@@ -10,6 +10,7 @@ import AdminDashboard from './components/AdminDashboard';
 import Login from './components/Login';
 import Register from './components/Register';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
+import SimpleSearch from './components/SimpleSearch';
 
 const theme = createTheme({
   palette: {
@@ -46,12 +47,13 @@ const App = () => {
           <Navigation />
           <Routes>
             {/* Public routes */}
+            <Route path="/" element={<SimpleSearch />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             
             {/* Protected routes */}
             <Route
-              path="/"
+              path="/dashboard"
               element={
                 <PrivateRoute>
                   <Dashboard />

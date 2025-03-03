@@ -3,7 +3,7 @@ from elasticsearch_dsl import Search, Q
 
 class SearchService:
     def __init__(self):
-        self.es = Elasticsearch(['http://localhost:9200'])
+        self.es = Elasticsearch(['http://127.0.0.1:9200'])
     
     def search(self, query, category=None, tags=None, page=1, size=10):
         # Create search query
