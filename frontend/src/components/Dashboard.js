@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -17,40 +17,33 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const Dashboard = () => {
-  const { token, user } = useAuth();
+  const { user, isAuthenticated, getAuthHeaders, logout } = useAuth();
   const navigate = useNavigate();
   const [bookmarks, setBookmarks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  const fetchBookmarks = async () => {
-    if (!token) {
-      setError('Authentication token is missing');
-      setLoading(false);
-      return;
-    }
+  const handleAuthError = useCallback(() => {
+    logout();
+    navigate('/login');
+  }, [logout, navigate]);
 
+  const fetchBookmarks = async () => {
     try {
       setLoading(true);
-      const response = await fetch('http://127.0.0.1:5000/api/bookmarks', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      const data = await response.json();
-
+      const headers = getAuthHeaders();
+      const response = await fetch('http://127.0.0.1:5000/api/bookmarks', { headers });
+      
       if (response.ok) {
+        const data = await response.json();
         setBookmarks(data.bookmarks);
+      } else if (response.status === 401) {
+        handleAuthError();
       } else {
-        if (response.status === 401) {
-          setError('Your session has expired. Please login again.');
-          navigate('/login');
-        } else {
-          setError('Failed to fetch bookmarks');
-        }
+        setError('Failed to fetch bookmarks');
       }
     } catch (error) {
+      console.error('Failed to fetch bookmarks:', error);
       setError('Failed to connect to the server');
     } finally {
       setLoading(false);
@@ -58,37 +51,30 @@ const Dashboard = () => {
   };
 
   const removeBookmark = async (resourceId) => {
-    if (!token) {
-      setError('Authentication token is missing');
-      return;
-    }
-
     try {
+      const headers = getAuthHeaders();
       const response = await fetch(`http://127.0.0.1:5000/api/bookmarks/${resourceId}`, {
         method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       });
 
       if (response.ok) {
         setBookmarks(prev => prev.filter(bookmark => bookmark.id !== resourceId));
       } else if (response.status === 401) {
-        setError('Your session has expired. Please login again.');
-        navigate('/login');
+        handleAuthError();
       }
     } catch (error) {
       console.error('Failed to remove bookmark:', error);
-      setError('Failed to remove bookmark');
     }
   };
 
   useEffect(() => {
-    if (token) {
+    if (isAuthenticated) {
       fetchBookmarks();
+    } else {
+      navigate('/login');
     }
-  }, [token, navigate]);
+  }, [isAuthenticated, navigate]);
 
   const getResourceTypeColor = (type) => {
     const colors = {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   Container,
   Grid,
@@ -26,7 +26,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
 const KnowledgeHub = () => {
-  const { token, isAuthenticated } = useAuth();
+  const { isAuthenticated, getAuthHeaders, logout } = useAuth();
   const navigate = useNavigate();
   const [resources, setResources] = useState({});
   const [loading, setLoading] = useState(true);
@@ -62,22 +62,23 @@ const KnowledgeHub = () => {
     'Tool'
   ];
 
+  const handleAuthError = useCallback(() => {
+    logout();
+    navigate('/login');
+  }, [logout, navigate]);
+
   const fetchResources = async () => {
     try {
       setLoading(true);
+      console.log('giigigis')
       let url = `http://127.0.0.1:5000/api/resources?page=${page}&size=18`;
       if (category !== 'all') url += `&category=${category}`;
       if (resourceType !== 'all') url += `&resource_type=${resourceType}`;
       if (searchQuery) url += `&query=${encodeURIComponent(searchQuery)}`;
 
-      const headers = {
-        'Content-Type': 'application/json'
-      };
-      
-      if (isAuthenticated && token) {
-        headers['Authorization'] = `Bearer ${token}`;
-      }
-
+      console.log("hee")
+      const headers = getAuthHeaders();
+      console.log('head' + getAuthHeaders())
       const response = await fetch(url, { headers });
       const data = await response.json();
 
@@ -93,14 +94,14 @@ const KnowledgeHub = () => {
         setResources(groupedResources);
         setTotalPages(data.total_pages);
       } else {
-        if (response.status === 401 && isAuthenticated) {
-          setError('Your session has expired. Please login again.');
-          navigate('/login');
+        if (response.status === 401) {
+          handleAuthError();
         } else {
           setError('Failed to fetch resources');
         }
       }
     } catch (error) {
+      console.error('Failed to fetch resources:', error);
       setError('Failed to connect to the server');
     } finally {
       setLoading(false);
@@ -108,21 +109,17 @@ const KnowledgeHub = () => {
   };
 
   const fetchBookmarks = async () => {
-    if (!isAuthenticated || !token) return;
+    if (!isAuthenticated) return;
     
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/bookmarks', {
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
-      });
+      const headers = getAuthHeaders();
+      const response = await fetch('http://127.0.0.1:5000/api/bookmarks', { headers });
       const data = await response.json();
       
       if (response.ok) {
         setBookmarks(new Set(data.bookmarks.map(b => b.id)));
       } else if (response.status === 401) {
-        navigate('/login');
+        handleAuthError();
       }
     } catch (error) {
       console.error('Failed to fetch bookmarks:', error);
@@ -130,19 +127,17 @@ const KnowledgeHub = () => {
   };
 
   const toggleBookmark = async (resourceId) => {
-    if (!isAuthenticated || !token) {
+    if (!isAuthenticated) {
       navigate('/login');
       return;
     }
 
     try {
       const method = bookmarks.has(resourceId) ? 'DELETE' : 'POST';
+      const headers = getAuthHeaders();
       const response = await fetch(`http://127.0.0.1:5000/api/bookmarks/${resourceId}`, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        }
+        headers
       });
 
       if (response.ok) {
@@ -156,7 +151,7 @@ const KnowledgeHub = () => {
           return newBookmarks;
         });
       } else if (response.status === 401) {
-        navigate('/login');
+        handleAuthError();
       }
     } catch (error) {
       console.error('Failed to toggle bookmark:', error);
@@ -165,13 +160,13 @@ const KnowledgeHub = () => {
 
   useEffect(() => {
     fetchResources();
-  }, [page, category, resourceType, searchQuery, token]);
+  }, [page, category, resourceType, searchQuery]);
 
   useEffect(() => {
-    if (isAuthenticated && token) {
+    if (isAuthenticated) {
       fetchBookmarks();
     }
-  }, [isAuthenticated, token]);
+  }, [isAuthenticated]);
 
   const handlePageChange = (event, value) => {
     setPage(value);
