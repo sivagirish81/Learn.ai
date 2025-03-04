@@ -11,7 +11,7 @@ def get_bookmarks(current_user):
     try:
         print("hisss")
         user = User.get(current_user['id'])
-        bookmarks = User.get_bookmarks(user)
+        bookmarks = user['bookmarks']
         return jsonify(bookmarks)
     except UserValidationError as e:
         return jsonify({'error': str(e)}), 400
@@ -24,8 +24,10 @@ def add_bookmark(current_user, resource_id):
     """Add a bookmark"""
     try:
         user = User.get(current_user['id'])
-        if user.add_bookmark(resource_id):
-            User.update(current_user['id'], {'bookmarks': user.bookmarks})
+        print(user)
+        if (resource_id not in user['bookmarks']):
+            user['bookmarks'].append(resource_id)
+            User.update(current_user['id'], {'bookmarks': user['bookmarks']})
             return jsonify({'message': 'Bookmark added successfully'})
         return jsonify({'message': 'Resource already bookmarked'})
     except UserValidationError as e:

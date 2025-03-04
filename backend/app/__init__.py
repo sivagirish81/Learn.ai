@@ -9,15 +9,7 @@ def create_app():
     app = Flask(__name__)
     
     # Configure CORS for all routes
-    CORS(app, 
-         resources={
-             r"/*": {
-                 "origins": "*",
-                 "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-                 "allow_headers": ["Content-Type", "Authorization", "Accept"],
-                 "expose_headers": ["Content-Type", "Authorization"]
-             }
-         })
+    CORS(app, resources={r"/": {"origins": ""}}, supports_credentials=True)
     
     # Debug logging for requests
     @app.before_request

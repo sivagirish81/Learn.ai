@@ -1,7 +1,5 @@
 from flask import Blueprint, request, jsonify
 from app.models.resource import Resource, ResourceValidationError
-from app.models.user import User
-from datetime import datetime
 
 # Create blueprint without url_prefix (we'll add it in the route)
 resources_bp = Blueprint('resources', __name__)
@@ -18,37 +16,13 @@ def resources():
             if not data:
                 return jsonify({'error': 'No data provided'}), 400
 
-            # Set initial status as pending
-            data['status'] = 'pending'
-            data['created_at'] = datetime.utcnow().isoformat()
-            data['updated_at'] = datetime.utcnow().isoformat()
-
-            # Get current user from token
-            auth_header = request.headers.get('Authorization')
-            if not auth_header or not auth_header.startswith('Bearer '):
-                return jsonify({'error': 'Missing or invalid authorization header'}), 401
-
-            token = auth_header.split(' ')[1]
-            current_user = User.get_from_token(token)
-            if not current_user:
-                return jsonify({'error': 'Invalid token'}), 401
-
-            # Add user information to resource
-            data['submitted_by'] = current_user['id']
-            data['submitter_name'] = current_user.get('name', 'Anonymous')
-
-            # Create resource
-            result = Resource.create(data)
-            return jsonify({
-                'message': 'Resource submitted successfully',
-                'resource': result
-            }), 201
-
+            resource = Resource.create(data)
+            return jsonify(resource), 201
         except ResourceValidationError as e:
             return jsonify({'error': str(e)}), 400
         except Exception as e:
             return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
-            
+        
     elif request.method == 'GET':
         try:
             # Get query parameters with defaults
@@ -207,46 +181,11 @@ def bulk_create_resources():
 
 @resources_bp.route('/api/resources/categories', methods=['GET', 'OPTIONS'])
 def get_categories():
-    """Get all available categories"""
+    """Get all valid categories"""
     if request.method == 'OPTIONS':
         return '', 200
-
-    try:
-        # Get categories from Elasticsearch aggregations
-        result = Resource.es.search(
-            index=Resource.index_name,
-            body={
-                'size': 0,
-                'aggs': {
-                    'categories': {
-                        'terms': {
-                            'field': 'category.keyword',
-                            'size': 50
-                        }
-                    }
-                }
-            }
-        )
-
-        # Extract categories from aggregation buckets
-        categories = [
-            bucket['key']
-            for bucket in result['aggregations']['categories']['buckets']
-        ]
-
-        # Add any predefined categories that might not be in the index yet
-        if hasattr(Resource, 'VALID_CATEGORIES'):
-            predefined_categories = set(Resource.VALID_CATEGORIES)
-            categories = list(set(categories) | predefined_categories)
-            categories.sort()
-
-        return jsonify({'categories': categories})
-
-    except Exception as e:
-        return jsonify({
-            'error': 'Failed to fetch categories',
-            'details': str(e)
-        }), 500
+        
+    return jsonify(list(Resource.VALID_CATEGORIES))
 
 @resources_bp.route('/api/test', methods=['GET', 'OPTIONS'])
 def test():
@@ -255,38 +194,3 @@ def test():
         return '', 200
         
     return jsonify({"message": "Test route is working!"})
-
-@resources_bp.route('/api/resources/types', methods=['GET', 'OPTIONS'])
-def get_resource_types():
-    """Get all available resource types"""
-    if request.method == 'OPTIONS':
-        return '', 200
-
-    try:
-        result = Resource.es.search(
-            index=Resource.index_name,
-            body={
-                'size': 0,
-                'aggs': {
-                    'types': {
-                        'terms': {
-                            'field': 'resource_type.keyword',
-                            'size': 50
-                        }
-                    }
-                }
-            }
-        )
-
-        types = [
-            bucket['key']
-            for bucket in result['aggregations']['types']['buckets']
-        ]
-
-        return jsonify({'resource_types': types})
-
-    except Exception as e:
-        return jsonify({
-            'error': 'Failed to fetch resource types',
-            'details': str(e)
-        }), 500
