@@ -221,6 +221,21 @@ class Resource:
             raise ResourceValidationError(f"Failed to search resources: {str(e)}")
 
     @classmethod
+    def get_all_resources(cls):
+        """Get all resources"""
+        try:
+            es = Elasticsearch()
+            result = es.search(index=cls.index_name, body={
+                'query': {"match_all": {}},
+                "_source": True,
+                'size': 100,
+                'track_total_hits': True
+            })
+            return result
+        except Exception as e:
+            raise ResourceValidationError(f"Failed to get all resources: {str(e)}")
+        
+    @classmethod
     def bulk_create(cls, resources):
         """Bulk create resources"""
         try:

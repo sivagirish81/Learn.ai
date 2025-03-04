@@ -122,7 +122,7 @@ def resources():
                 'details': str(e)
             }), 500
 
-@resources_bp.route('/api/resources/<string:resource_id>', methods=['GET', 'PUT', 'DELETE', 'OPTIONS'])
+@resources_bp.route('/api/resources/<string:resource_id>', methods=['PUT', 'DELETE', 'OPTIONS'])
 def resource_by_id(resource_id):
     """Handle single resource operations"""
     if request.method == 'OPTIONS':
@@ -179,13 +179,59 @@ def bulk_create_resources():
     except Exception as e:
         return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
 
-@resources_bp.route('/api/resources/categories', methods=['GET', 'OPTIONS'])
-def get_categories():
-    """Get all valid categories"""
-    if request.method == 'OPTIONS':
-        return '', 200
+# @resources_bp.route('/api/resources/categories', methods=['GET', 'OPTIONS'])
+# def get_categories():
+#     """Get all valid categories"""
+#     if request.method == 'OPTIONS':
+#         return '', 200
         
-    return jsonify(list(Resource.VALID_CATEGORIES))
+#     return jsonify(list(Resource.VALID_CATEGORIES))
+
+@resources_bp.route('/api/allresources', methods=['GET', 'OPTIONS'])
+def get_all_resources():
+    """Retrieve all resources from the database"""
+
+    try:
+        page = int(request.args.get('page', 1))
+        size = int(request.args.get('size', 9))
+
+        search_query = {
+            'bool': {
+                'must': [
+                    {'term': {'status': 'approved'}}  # Only return approved resources
+                ]
+            }
+        }
+
+        result = Resource.get_all_resources()
+
+        resources = []
+        for hit in result['hits']['hits']:
+            resource_data = hit['_source']
+            resource_data['id'] = hit['_id']
+            resources.append(resource_data)
+
+        total_hits = result['hits']['total']['value']
+        total_pages = (total_hits + size - 1) // size
+
+        return jsonify({
+            'resources': resources,
+            'total': total_hits,
+            'page': page,
+            'size': size,
+            'total_pages': total_pages
+        }), 200
+
+    except ValueError as e:
+        return jsonify({
+            'error': 'Invalid parameters',
+            'details': str(e)
+        }), 400
+    except Exception as e:
+        return jsonify({
+            'error': 'Failed to fetch resources',
+            'details': str(e)
+        }), 500
 
 @resources_bp.route('/api/test', methods=['GET', 'OPTIONS'])
 def test():

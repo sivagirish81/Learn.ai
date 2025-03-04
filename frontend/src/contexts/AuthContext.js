@@ -70,7 +70,6 @@ export const AuthProvider = ({ children }) => {
     console.log('sfksafnlkfnklfalkgblgbl')
     return {
       'Authorization': `Bearer ${token}`,
-      'Content-Type': 'application/json'
     };
   };
 
