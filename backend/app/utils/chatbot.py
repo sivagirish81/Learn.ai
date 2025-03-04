@@ -1,10 +1,10 @@
 import os
-import openai
+import google.generativeai as genai
 from elasticsearch_dsl import Search
 from flask import current_app
 
-# Initialize OpenAI API key
-openai.api_key = os.getenv('OPENAI_API_KEY', 'your-api-key-here')
+# Initialize Gemini API
+genai.configure(api_key=os.getenv('GEMINI_API_KEY', 'AIzaSyAFYC-IieK-hieFwU3G_X43jLrj14qNyG0'))
 
 class Chatbot:
     def __init__(self):
@@ -14,6 +14,8 @@ class Chatbot:
         recommendations."""
         
         self.conversation_history = []
+        self.model = genai.GenerativeModel('gemini-1.5-flash')
+        self.chat = self.model.start_chat(history=[])
 
     def search_resources(self, query, size=5):
         """Search for relevant resources in Elasticsearch"""
@@ -37,16 +39,13 @@ class Chatbot:
             print(f"Error searching resources: {str(e)}")
             return []
 
-    def get_completion(self, messages):
-        """Get completion from OpenAI API"""
+    def get_completion(self, user_message, context):
+        """Get completion from Gemini API"""
         try:
-            response = openai.ChatCompletion.create(
-                model="gpt-3.5-turbo",
-                messages=messages,
-                temperature=0.7,
-                max_tokens=500
-            )
-            return response.choices[0].message['content']
+            # Add context and user message
+            prompt = f"{context}\n\nUser: {user_message}"
+            response = self.chat.send_message(prompt)
+            return response.text
         except Exception as e:
             print(f"Error getting completion: {str(e)}")
             return "I apologize, but I'm having trouble processing your request right now. Please try again later."
@@ -60,21 +59,15 @@ class Chatbot:
             # Search for relevant resources
             resources = self.search_resources(user_message)
             
-            # Create system message with context and resources
-            system_message = self.context
+            # Create context with resources
+            context = self.context
             if resources:
-                system_message += "\n\nRelevant resources found:\n"
+                context += "\n\nRelevant resources found:\n"
                 for r in resources:
-                    system_message += f"- {r['title']}: {r['description']}\n"
+                    context += f"- {r['title']}: {r['description']}\n"
             
-            # Prepare messages for API call
-            messages = [
-                {"role": "system", "content": system_message},
-                *self.conversation_history
-            ]
-            
-            # Get response from OpenAI
-            response = self.get_completion(messages)
+            # Get response from Gemini
+            response = self.get_completion(user_message, context)
             
             # Add assistant response to conversation history
             self.conversation_history.append({"role": "assistant", "content": response})
@@ -94,4 +87,5 @@ class Chatbot:
 
     def clear_conversation(self):
         """Clear conversation history"""
-        self.conversation_history = [] 
+        self.conversation_history = []
+        self.chat = self.model.start_chat(history=[]) 
