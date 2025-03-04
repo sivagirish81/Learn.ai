@@ -104,6 +104,23 @@ class User:
             return None
         except Exception as e:
             raise UserValidationError(f"Failed to get user: {str(e)}")
+        
+    @classmethod
+    def get_all_user_ids(cls):
+        """Get all user IDs from the Elasticsearch index"""
+        try:
+            es = Elasticsearch()  # Ensure ES is properly initialized
+            result = es.search(
+                index=cls.index_name,
+                body={
+                    "query": {"match_all": {}},  # Get all users
+                    "_source": True,  # We only need IDs
+                    "size": 10000  # Adjust based on the expected number of users
+                }
+            )
+            return result
+        except Exception as e:
+            raise UserValidationError(f"Failed to fetch user IDs: {str(e)}")
 
     @classmethod
     def get_by_email(cls, email):

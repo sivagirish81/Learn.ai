@@ -9,7 +9,7 @@ def resources():
     """Handle resources endpoint"""
     if request.method == 'OPTIONS':
         return '', 200
-        
+    print("GGGDDSAD")
     if request.method == 'POST':
         try:
             data = request.get_json()
@@ -22,9 +22,9 @@ def resources():
             return jsonify({'error': str(e)}), 400
         except Exception as e:
             return jsonify({'error': 'Internal server error', 'details': str(e)}), 500
-        
     elif request.method == 'GET':
         try:
+            print("Hwwdadads ")
             # Get query parameters with defaults
             page = int(request.args.get('page', 1))
             size = int(request.args.get('size', 9))
