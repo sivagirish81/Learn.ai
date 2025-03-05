@@ -11,6 +11,8 @@ import Login from './components/Login';
 import Register from './components/Register';
 import { useAuth, AuthProvider } from './contexts/AuthContext';
 import SimpleSearch from './components/SimpleSearch';
+import KnowledgeHub from './components/KnowledgeHub';
+import Bookmarks from './components/Bookmarks'; 
 
 const theme = createTheme({
   palette: {
@@ -47,10 +49,12 @@ const App = () => {
           <Navigation />
           <Routes>
             {/* Public routes */}
-            <Route path="/" element={<SimpleSearch />} />
+            <Route path="/" element={<KnowledgeHub />} />
+            <Route path="/search" element={<SimpleSearch />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
-            
+            <Route path="/bookmarks" element={<Bookmarks />} />
+
             {/* Protected routes */}
             <Route
               path="/dashboard"

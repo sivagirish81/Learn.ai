@@ -104,6 +104,23 @@ class User:
             return None
         except Exception as e:
             raise UserValidationError(f"Failed to get user: {str(e)}")
+        
+    @classmethod
+    def get_all_user_ids(cls):
+        """Get all user IDs from the Elasticsearch index"""
+        try:
+            es = Elasticsearch()  # Ensure ES is properly initialized
+            result = es.search(
+                index=cls.index_name,
+                body={
+                    "query": {"match_all": {}},  # Get all users
+                    "_source": True,  # We only need IDs
+                    "size": 10000  # Adjust based on the expected number of users
+                }
+            )
+            return result
+        except Exception as e:
+            raise UserValidationError(f"Failed to fetch user IDs: {str(e)}")
 
     @classmethod
     def get_by_email(cls, email):
@@ -169,6 +186,7 @@ class User:
         """Get all bookmarked resources"""
         try:
             print(self)
+            print("hu")
             if not self['bookmarks']:
                 return []
                 
@@ -185,6 +203,30 @@ class User:
             return self['bookmarks']
         except Exception as e:
             raise UserValidationError(f"Failed to get bookmarks: {str(e)}")
+        
+    def get_bookmarks_by_id(self, ids):
+        """Get all bookmarked resources"""
+        try:
+            print("hu")
+            if not ids:
+                return []
+                
+            results = es.mget(
+                index='ai_resources',
+                body={'ids': ids}
+            )
+        
+            print(results)
+            self['bookmarks'] = []
+            for doc in results['docs']:
+                if doc['found']:
+                    doc['_source']['id'] = doc['_id']
+                    self['bookmarks'].append({ **doc['_source']})
+            
+            return self['bookmarks']
+        except Exception as e:
+            raise UserValidationError(f"Failed to get bookmarks: {str(e)}")
+        
 
     @classmethod
     def setup_index(cls):

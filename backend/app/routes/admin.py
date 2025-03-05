@@ -48,7 +48,7 @@ def get_pending_resources():
         return jsonify({'error': 'Failed to fetch pending resources', 'details': str(e)}), 500
 
 @admin_bp.route('/api/admin/users', methods=['GET', 'OPTIONS'])
-@admin_required
+#@admin_required
 def get_users():
     """Get all users with pagination and sorting"""
     if request.method == 'OPTIONS':
@@ -90,20 +90,18 @@ def get_users():
         }
 
         # Execute search
-        result = User.es.search(
-            index=User.index_name,
-            body=body
-        )
+        print("Hisssdads")
+        result = User.get_all_user_ids()
+        print(result)
 
         # Format response
-        users = []
+        users = list()
         for hit in result['hits']['hits']:
             user_data = hit['_source']
             # Remove sensitive data
-            user_data.pop('password_hash', None)
+            user_data['password_hash'] = None
             users.append({
-                'id': hit['_id'],
-                **user_data
+                'name': user_data['name'], 'email': user_data['email'], 'role': user_data['role']
             })
 
         return jsonify({

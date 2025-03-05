@@ -76,6 +76,12 @@ const Navigation = () => {
       icon: <AdminPanelSettings />,
       path: '/admin',
       show: isAuthenticated && user?.role === 'admin'
+    },
+    {
+      text: 'Bookmarks',
+      icon: <Bookmark />,
+      path: '/bookmarks',
+      show: isAuthenticated
     }
   ];
 
