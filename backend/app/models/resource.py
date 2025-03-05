@@ -186,7 +186,7 @@ class Resource:
                 must_conditions.append({'terms': {'tags.keyword': tags if isinstance(tags, list) else [tags]}})
                 
             if status:
-                must_conditions.append({'term': {'status.keyword': status}})
+                must_conditions.append({'term': {'status': status}})
             else:
                 # By default, only show approved resources
                 must_conditions.append({'term': {'status.keyword': 'approved'}})
@@ -222,12 +222,52 @@ class Resource:
 
     @classmethod
     def get_all_resources(cls):
-        """Get all resources"""
+        """Get all pending resources"""
         try:
             es = Elasticsearch()
             result = es.search(index=cls.index_name, body={
                 'query': {"match_all": {}},
                 "_source": True,
+                'size': 100,
+                'track_total_hits': True
+            })
+            return result
+        except Exception as e:
+            raise ResourceValidationError(f"Failed to get all resources: {str(e)}")
+        
+    @classmethod
+    def get_pending_resources(cls):
+        """Get all resources"""
+        try:
+            es = Elasticsearch()
+            result = es.search(index=cls.index_name, body={
+                "query": {
+                    "bool": {
+                    "must": [
+                        {
+                        "match": {
+                            "status": "pending"
+                        }
+                        }
+                    ]
+                    }
+                },
+                "size": 100
+                })
+            return result
+        except Exception as e:
+            raise ResourceValidationError(f"Failed to get all resources: {str(e)}")
+        
+    @classmethod
+    def query_resources(cls, query=None, category=None, resource_type=None, tags=None,
+                        status=None, page=1, size=10):
+        """Search for resources with filters"""
+        try:
+            es = Elasticsearch()
+            result = es.search(index=cls.index_name, body={
+                'query': query,
+                "_source": True,
+                'from': (page - 1) * size,
                 'size': 100,
                 'track_total_hits': True
             })

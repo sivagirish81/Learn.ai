@@ -28,6 +28,36 @@ def admin_required(f):
 
 @admin_bp.route('/api/admin/pending-resources', methods=['GET', 'OPTIONS'])
 #@admin_required
+# def get_pending_resources():
+#     """Get all pending resources"""
+#     if request.method == 'OPTIONS':
+#         return '', 200
+
+#     try:
+#         page = int(request.args.get('page', 1))
+#         size = int(request.args.get('size', 10))
+
+#         # results = Resource.search(
+#         #     status='pending',
+#         #     page=page,
+#         #     size=size
+#         # )
+#         results = Resource.get_pending_resources()
+#         print(results)
+#         resources = []
+#         for hit in results['hits']['hits']:
+#             resource_data = hit['_source']
+#             resource_data['id'] = hit['_id']
+#             resources.append(resource_data)
+#         if not results:
+#             return jsonify({'message': 'No pending resources found'}), 404
+#         # Format response
+#         print("Hisssdads")
+#         print(resources)
+
+#         return jsonify(resources)
+#     except Exception as e:
+#         return jsonify({'error': 'Failed to fetch pending resources', 'details': str(e)}), 500
 def get_pending_resources():
     """Get all pending resources"""
     if request.method == 'OPTIONS':
@@ -46,7 +76,7 @@ def get_pending_resources():
         return jsonify(results)
     except Exception as e:
         return jsonify({'error': 'Failed to fetch pending resources', 'details': str(e)}), 500
-
+    
 @admin_bp.route('/api/admin/users', methods=['GET', 'OPTIONS'])
 #@admin_required
 def get_users():
@@ -159,7 +189,7 @@ def approve_resource(resource_id):
 
 @admin_bp.route('/api/admin/resources/<resource_id>/reject', methods=['POST', 'OPTIONS'])
 #@admin_required
-def reject_resource(current_user, resource_id):
+def reject_resource(resource_id):
     """Reject a pending resource"""
     if request.method == 'OPTIONS':
         return '', 200
@@ -174,6 +204,7 @@ def reject_resource(current_user, resource_id):
             return jsonify({'error': 'Resource is not pending approval'}), 400
 
         # Get admin notes from request
+        print("SSAdSD")
         data = request.get_json()
         admin_notes = data.get('admin_notes')
 
@@ -184,7 +215,7 @@ def reject_resource(current_user, resource_id):
         update_data = {
             'status': 'rejected',
             'admin_notes': admin_notes,
-            'rejected_by': current_user['id'],
+            'rejected_by': 'admin',
             'rejected_at': datetime.utcnow().isoformat(),
             'updated_at': datetime.utcnow().isoformat()
         }
