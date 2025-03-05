@@ -4,7 +4,7 @@ from elasticsearch_dsl import Search
 from flask import current_app
 
 # Initialize Gemini API
-genai.configure(api_key=os.getenv('GEMINI_API_KEY', 'AIzaSyDI7ADbF3cq_fLxeiWi6nL3aJpraFdecM4'))
+genai.configure(api_key=os.getenv('GEMINI_API_KEY', 'API_KEY'))
 
 class Chatbot:
     def __init__(self):
