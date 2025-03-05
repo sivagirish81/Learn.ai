@@ -13,6 +13,10 @@ def get_bookmarks(current_user):
         user = User.get(current_user['id'])
         bookmarks = user['bookmarks']
         print(bookmarks)
+        bookmarks = User.get_bookmarks_by_id(user, user['bookmarks'])
+        print(bookmarks)
+        print("BBBB")
+        
         return jsonify(bookmarks)
     except UserValidationError as e:
         return jsonify({'error': str(e)}), 400

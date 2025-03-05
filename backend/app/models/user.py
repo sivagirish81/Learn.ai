@@ -186,6 +186,7 @@ class User:
         """Get all bookmarked resources"""
         try:
             print(self)
+            print("hu")
             if not self['bookmarks']:
                 return []
                 
@@ -202,6 +203,28 @@ class User:
             return self['bookmarks']
         except Exception as e:
             raise UserValidationError(f"Failed to get bookmarks: {str(e)}")
+        
+    def get_bookmarks_by_id(self, ids):
+        """Get all bookmarked resources"""
+        try:
+            print("hu")
+            if not ids:
+                return []
+                
+            results = es.mget(
+                index='ai_resources',
+                body={'ids': ids}
+            )
+        
+            print(results)
+            for doc in results['docs']:
+                if doc['found']:
+                    self['bookmarks'].append({'id': doc['_id'], **doc['_source']})
+            
+            return self['bookmarks']
+        except Exception as e:
+            raise UserValidationError(f"Failed to get bookmarks: {str(e)}")
+        
 
     @classmethod
     def setup_index(cls):
