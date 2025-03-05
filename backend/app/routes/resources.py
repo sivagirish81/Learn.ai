@@ -277,6 +277,7 @@ def get_all_resources():
             'details': str(e)
         }), 500
 
+
 @resources_bp.route('/api/test', methods=['GET', 'OPTIONS'])
 def test():
     """Test route"""

@@ -189,7 +189,7 @@ def approve_resource(resource_id):
 
 @admin_bp.route('/api/admin/resources/<resource_id>/reject', methods=['POST', 'OPTIONS'])
 #@admin_required
-def reject_resource(current_user, resource_id):
+def reject_resource(resource_id):
     """Reject a pending resource"""
     if request.method == 'OPTIONS':
         return '', 200
@@ -204,6 +204,7 @@ def reject_resource(current_user, resource_id):
             return jsonify({'error': 'Resource is not pending approval'}), 400
 
         # Get admin notes from request
+        print("SSAdSD")
         data = request.get_json()
         admin_notes = data.get('admin_notes')
 
@@ -214,7 +215,7 @@ def reject_resource(current_user, resource_id):
         update_data = {
             'status': 'rejected',
             'admin_notes': admin_notes,
-            'rejected_by': current_user['id'],
+            'rejected_by': 'admin',
             'rejected_at': datetime.utcnow().isoformat(),
             'updated_at': datetime.utcnow().isoformat()
         }
