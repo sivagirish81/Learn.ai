@@ -11,7 +11,7 @@ import {
   CircularProgress,
   Alert
 } from '@mui/material';
-import { Bookmark, OpenInNew } from '@mui/icons-material';
+import { OpenInNew, Delete } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 
@@ -37,7 +37,7 @@ const Bookmarks = () => {
       console.log('Bookmarks response:', data); // Log the response
 
       if (response.ok) {
-        setBookmarks(data.bookmarks || []);
+        setBookmarks(data || []);
       } else if (response.status === 401) {
         handleAuthError();
       } else {
@@ -48,6 +48,27 @@ const Bookmarks = () => {
       setError('Failed to connect to the server');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const removeBookmark = async (resourceId) => {
+    try {
+      const headers = getAuthHeaders();
+      const response = await fetch(`http://127.0.0.1:5000/api/bookmarks/${resourceId}`, {
+        method: 'DELETE',
+        headers
+      });
+
+      if (response.ok) {
+        setBookmarks(prev => prev.filter(bookmark => bookmark.id !== resourceId));
+      } else if (response.status === 401) {
+        handleAuthError();
+      } else {
+        setError('Failed to remove bookmark');
+      }
+    } catch (error) {
+      console.error('Failed to remove bookmark:', error);
+      setError('Failed to connect to the server');
     }
   };
 
@@ -83,8 +104,8 @@ const Bookmarks = () => {
         </Alert>
       ) : (
         <Grid container spacing={3}>
-          {bookmarks.map((bookmark) => (
-            <Grid item xs={12} sm={6} md={4} key={bookmark.id}>
+          {bookmarks.map((bookmark, index) => (
+            <Grid item xs={12} sm={6} md={4} key={index}>
               <Card sx={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
                 <CardContent>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
@@ -94,6 +115,9 @@ const Bookmarks = () => {
                     <Box>
                       <IconButton href={bookmark.url} target="_blank">
                         <OpenInNew />
+                      </IconButton>
+                      <IconButton onClick={() => removeBookmark(bookmark.id)}>
+                        <Delete />
                       </IconButton>
                     </Box>
                   </Box>
@@ -112,9 +136,9 @@ const Bookmarks = () => {
                   </Typography>
 
                   <Box sx={{ mt: 'auto' }}>
-                    {bookmark.tags?.map((tag) => (
+                    {bookmark.tags?.map((tag, tagIndex) => (
                       <Chip
-                        key={tag}
+                        key={tagIndex}
                         label={tag}
                         size="small"
                         variant="outlined"

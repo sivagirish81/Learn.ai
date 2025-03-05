@@ -217,9 +217,11 @@ class User:
             )
         
             print(results)
+            self['bookmarks'] = []
             for doc in results['docs']:
                 if doc['found']:
-                    self['bookmarks'].append({'id': doc['_id'], **doc['_source']})
+                    doc['_source']['id'] = doc['_id']
+                    self['bookmarks'].append({ **doc['_source']})
             
             return self['bookmarks']
         except Exception as e:

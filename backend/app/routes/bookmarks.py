@@ -9,13 +9,9 @@ bookmarks_bp = Blueprint('bookmarks', __name__)
 def get_bookmarks(current_user):
     """Get user's bookmarked resources"""
     try:
-        print("hisss")
         user = User.get(current_user['id'])
         bookmarks = user['bookmarks']
-        print(bookmarks)
         bookmarks = User.get_bookmarks_by_id(user, user['bookmarks'])
-        print(bookmarks)
-        print("BBBB")
         
         return jsonify(bookmarks)
     except UserValidationError as e:
@@ -46,8 +42,9 @@ def remove_bookmark(current_user, resource_id):
     """Remove a bookmark"""
     try:
         user = User.get(current_user['id'])
-        if user.remove_bookmark(resource_id):
-            User.update(current_user['id'], {'bookmarks': user.bookmarks})
+        if resource_id in user['bookmarks']:
+            user['bookmarks'].remove(resource_id)
+            User.update(current_user['id'], {'bookmarks': user['bookmarks']})
             return jsonify({'message': 'Bookmark removed successfully'})
         return jsonify({'message': 'Resource not bookmarked'})
     except UserValidationError as e:
