@@ -56,10 +56,7 @@ const KnowledgeHub = () => {
     'GitHub Repository',
     'Course',
     'Blog Post',
-    'Documentation',
-    'Video',
     'Book',
-    'Tool'
   ];
 
   const handleAuthError = useCallback(() => {
