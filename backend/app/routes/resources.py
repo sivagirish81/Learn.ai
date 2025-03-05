@@ -15,7 +15,8 @@ def resources():
             data = request.get_json()
             if not data:
                 return jsonify({'error': 'No data provided'}), 400
-
+            data['status'] = 'pending'
+            print(data)
             resource = Resource.create(data)
             return jsonify(resource), 201
         except ResourceValidationError as e:
@@ -194,7 +195,13 @@ def get_all_resources():
     try:
         page = int(request.args.get('page', 1))
         size = int(request.args.get('size', 9))
+        category = request.args.get('category')
+        resource_type = request.args.get('resource_type')
+        sort_by = request.args.get('sort_by', 'created_at')
+        sort_order = request.args.get('sort_order', 'desc')
+        query = request.args.get('query')
 
+        # Build search query
         search_query = {
             'bool': {
                 'must': [
@@ -203,7 +210,44 @@ def get_all_resources():
             }
         }
 
-        result = Resource.get_all_resources()
+        # Add category filter if specified
+        if category and category != 'all':
+            search_query['bool']['must'].append({
+                'match': {
+                    'category': category
+                }
+            })
+        # Add resource type filter if specified
+        if resource_type and resource_type != 'all':
+            search_query['bool']['must'].append({
+                'match': {
+                    'resource_type': resource_type
+                }
+            })
+        # Add text search if query is provided
+        if query:
+            search_query['bool']['must'].append({
+                'multi_match': {
+                    'query': query,
+                    'fields': ['title^3', 'description^2', 'tags', 'author'],
+                    'type': 'best_fields',
+                    'fuzziness': 'AUTO'
+                }
+            })
+
+        # Build sort configuration
+        sort_config = [{
+            sort_by: {
+                'order': sort_order
+            }
+        }]
+        # If sorting by relevance (for text search), add _score sorting
+        if query and sort_by == '_score':
+            sort_config = [{'_score': {'order': 'desc'}}] + sort_config
+
+        print(search_query)
+        result = Resource.query_resources(search_query, sort_config, page, size)
+        #result = Resource.get_all_resources()
 
         resources = []
         for hit in result['hits']['hits']:

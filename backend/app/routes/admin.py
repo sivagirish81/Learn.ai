@@ -28,6 +28,36 @@ def admin_required(f):
 
 @admin_bp.route('/api/admin/pending-resources', methods=['GET', 'OPTIONS'])
 #@admin_required
+# def get_pending_resources():
+#     """Get all pending resources"""
+#     if request.method == 'OPTIONS':
+#         return '', 200
+
+#     try:
+#         page = int(request.args.get('page', 1))
+#         size = int(request.args.get('size', 10))
+
+#         # results = Resource.search(
+#         #     status='pending',
+#         #     page=page,
+#         #     size=size
+#         # )
+#         results = Resource.get_pending_resources()
+#         print(results)
+#         resources = []
+#         for hit in results['hits']['hits']:
+#             resource_data = hit['_source']
+#             resource_data['id'] = hit['_id']
+#             resources.append(resource_data)
+#         if not results:
+#             return jsonify({'message': 'No pending resources found'}), 404
+#         # Format response
+#         print("Hisssdads")
+#         print(resources)
+
+#         return jsonify(resources)
+#     except Exception as e:
+#         return jsonify({'error': 'Failed to fetch pending resources', 'details': str(e)}), 500
 def get_pending_resources():
     """Get all pending resources"""
     if request.method == 'OPTIONS':
@@ -46,7 +76,7 @@ def get_pending_resources():
         return jsonify(results)
     except Exception as e:
         return jsonify({'error': 'Failed to fetch pending resources', 'details': str(e)}), 500
-
+    
 @admin_bp.route('/api/admin/users', methods=['GET', 'OPTIONS'])
 #@admin_required
 def get_users():
