@@ -26,7 +26,7 @@ const SimpleSearch = () => {
         try {
             const response = await fetch(`http://127.0.0.1:5000/api/search?query=${encodeURIComponent(searchTerm)}`);
             const data = await response.json();
-            setResults(data.results || []);
+            setResults(data.resources || []);
         } catch (error) {
             console.error('Search failed:', error);
         } finally {
