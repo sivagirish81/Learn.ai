@@ -14,6 +14,7 @@ import SimpleSearch from './components/SimpleSearch';
 import KnowledgeHub from './components/KnowledgeHub';
 import Bookmarks from './components/Bookmarks'; 
 import TrendingProjects from './components/TrendingProjects';
+import AdvancedSearch from './components/AdvancedSearch';
 
 const theme = createTheme({
   palette: {
@@ -56,6 +57,7 @@ const App = () => {
             <Route path="/register" element={<Register />} />
             <Route path="/bookmarks" element={<Bookmarks />} />
             <Route path="/trending-projects" element={<TrendingProjects />} />
+            <Route path="/advanced-search" element={<AdvancedSearch />} />
 
             {/* Protected routes */}
             <Route

@@ -29,7 +29,8 @@ import {
   Person,
   Logout,
   TrendingFlat,
-  TrendingUpSharp
+  TrendingUpSharp,
+  Search
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -59,6 +60,12 @@ const Navigation = () => {
       text: 'Dashboard',
       icon: <Dashboard />,
       path: '/',
+      show: isAuthenticated
+    },
+    {
+      text: 'Advanced Search',
+      icon: <Search />,
+      path: '/advanced-search',
       show: isAuthenticated
     },
     {
