@@ -27,7 +27,9 @@ import {
   AdminPanelSettings,
   Bookmark,
   Person,
-  Logout
+  Logout,
+  TrendingFlat,
+  TrendingUpSharp
 } from '@mui/icons-material';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -81,6 +83,12 @@ const Navigation = () => {
       text: 'Bookmarks',
       icon: <Bookmark />,
       path: '/bookmarks',
+      show: isAuthenticated
+    },
+    {
+      text: 'Trending Projects',
+      icon: <TrendingUpSharp />,
+      path: '/trending-projects',
       show: isAuthenticated
     }
   ];
