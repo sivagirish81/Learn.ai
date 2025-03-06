@@ -1,5 +1,6 @@
 from flask import Blueprint, request, jsonify
 from app.models.resource import Resource, ResourceValidationError
+from app.utils.github import GitHub
 
 # Create blueprint without url_prefix (we'll add it in the route)
 resources_bp = Blueprint('resources', __name__)
@@ -277,7 +278,16 @@ def get_all_resources():
             'details': str(e)
         }), 500
 
-
+@resources_bp.route('/api/github/trending', methods=['GET'])
+def get_trending_repositories():
+    """Fetch trending AI repositories from GitHub"""
+    try:
+        github = GitHub()
+        repositories = github.get_trending_repositories()
+        return jsonify(repositories), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch trending repositories', 'details': str(e)}), 500
+    
 @resources_bp.route('/api/test', methods=['GET', 'OPTIONS'])
 def test():
     """Test route"""
