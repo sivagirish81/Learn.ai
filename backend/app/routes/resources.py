@@ -1,5 +1,8 @@
 from flask import Blueprint, request, jsonify
 from app.models.resource import Resource, ResourceValidationError
+from app.utils.github import GitHub
+from app.utils.search import Search
+
 
 # Create blueprint without url_prefix (we'll add it in the route)
 resources_bp = Blueprint('resources', __name__)
@@ -277,7 +280,38 @@ def get_all_resources():
             'details': str(e)
         }), 500
 
+@resources_bp.route('/api/github/trending', methods=['GET'])
+def get_trending_repositories():
+    """Fetch trending AI repositories from GitHub"""
+    try:
+        github = GitHub()
+        repositories = github.get_trending_repositories()
+        return jsonify(repositories), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch trending repositories', 'details': str(e)}), 500
+    
+@resources_bp.route('/api/advsearch', methods=['GET'])
+def search_resources():
+    """Search for resources on GitHub, Coursera, and Medium"""
+    query = request.args.get('query')
+    if not query:
+        return jsonify({'error': 'Query parameter is required'}), 400
 
+    try:
+        search = Search()
+        github_results = search.search_github(query)
+        coursera_results = search.search_coursera(query)
+        medium_results = search.search_medium(query)
+
+        # Combine all results into a single list
+        combined_results = github_results + coursera_results + medium_results
+
+        return jsonify({
+            'results': combined_results
+        }), 200
+    except Exception as e:
+        return jsonify({'error': 'Failed to fetch search results', 'details': str(e)}), 500
+    
 @resources_bp.route('/api/test', methods=['GET', 'OPTIONS'])
 def test():
     """Test route"""

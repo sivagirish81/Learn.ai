@@ -4,12 +4,12 @@ from elasticsearch_dsl import Search
 from flask import current_app
 
 # Initialize Gemini API
-genai.configure(api_key=os.getenv('GEMINI_API_KEY', 'API_KEY'))
+genai.configure(api_key=os.getenv('GEMINI_API_KEY', ''))
 
 class Chatbot:
     def __init__(self):
         self.context = """You are an AI learning assistant that helps users find relevant AI learning resources 
-        and answers questions about artificial intelligence. You have access to a database of tutorials, 
+        and answers questions about artificial intelligence. You can give your own search results as well. You have access to a database of tutorials, 
         research papers, and GitHub repositories. You can search this database to provide relevant 
         recommendations."""
         
