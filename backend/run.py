@@ -9,4 +9,4 @@ if __name__ == '__main__':
     index_sample_data()
     
     # Run the Flask app
-    app.run(debug=True) 
+    app.run(port=8000) 
