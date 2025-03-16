@@ -39,9 +39,6 @@ const ResourceSubmission = () => {
     'Course',
     'Blog Post',
     'Documentation',
-    'Video',
-    'Book',
-    'Tool'
   ];
 
   const categories = [
@@ -49,11 +46,9 @@ const ResourceSubmission = () => {
     'Deep Learning',
     'Natural Language Processing',
     'Computer Vision',
-    'Reinforcement Learning',
-    'AI Ethics',
-    'MLOps',
     'Data Science',
-    'Neural Networks'
+    'Neural Networks',
+    'Artificial Intelligence'
   ];
 
   const handleChange = (e) => {

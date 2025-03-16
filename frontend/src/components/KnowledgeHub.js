@@ -43,11 +43,9 @@ const KnowledgeHub = () => {
     'Deep Learning',
     'Natural Language Processing',
     'Computer Vision',
-    'Reinforcement Learning',
-    'AI Ethics',
-    'MLOps',
     'Data Science',
-    'Neural Networks'
+    'Neural Networks',
+    'Artificial Intelligence'
   ];
 
   const resourceTypes = [
