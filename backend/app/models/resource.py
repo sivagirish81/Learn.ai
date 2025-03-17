@@ -4,8 +4,9 @@ from elasticsearch.helpers import bulk
 from elasticsearch.exceptions import NotFoundError
 from urllib.parse import urlparse
 import re
+import os
 
-es = Elasticsearch(['http://127.0.0.1:9200'])
+es = Elasticsearch([os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')])
 
 class ResourceValidationError(Exception):
     pass

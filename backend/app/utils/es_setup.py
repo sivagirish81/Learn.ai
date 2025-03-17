@@ -4,10 +4,11 @@ from elasticsearch.helpers import bulk
 from elasticsearch.exceptions import ConnectionError
 import time
 import sys
+import os
 
 def get_elasticsearch_client():
     """Get Elasticsearch client with connection retry"""
-    es = Elasticsearch(['http://127.0.0.1:9200'])
+    es = Elasticsearch([os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')])
     retry_count = 0
     max_retries = 3
     
