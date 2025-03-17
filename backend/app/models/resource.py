@@ -7,12 +7,13 @@ import re
 import os
 
 es = Elasticsearch([os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')],
-        verify_certs=False,
+        use_ssl=True,
+        verify_certs=True,
         ssl_show_warn=False,
         request_timeout=30,
         retry_on_timeout=True,
         max_retries=10,
-        headers={"X-Elastic-Product": "Elasticsearch"} 
+        headers={"X-Elastic-Product": "Elasticsearch"}
     )
 
 class ResourceValidationError(Exception):
