@@ -2,16 +2,16 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, exceptions
 
-ES_HOST = 'https://kpc8psbuv0:tqi1g1t69r@learn-ai-4739164286.us-west-2.bonsaisearch.net:9200'
-INDEX_NAME = 'ai_resources_1'
+ES_HOST = 'https://kpc8psbuv0:tqi1g1t69r@learn-ai-4739164286.us-west-2.bonsaisearch.net'
+INDEX_NAME = 'ai_resources'
 
 # Connect to Elasticsearch
 es = Elasticsearch(
     [ES_HOST],
     use_ssl=True,
-    verify_certs=False,
+    verify_certs=True,
     ssl_show_warn=False,
     request_timeout=30,
     retry_on_timeout=True,
@@ -40,9 +40,12 @@ index_mapping = {
     }
 }
 
-# Create the Elasticsearch index
-es.indices.create(index=INDEX_NAME, body=index_mapping)
-
+# Create the Elasticsearch index if it doesn't exist
+if not es.indices.exists(index=INDEX_NAME):
+    es.indices.create(index=INDEX_NAME, body=index_mapping)
+    print(f"Index '{INDEX_NAME}' created successfully.")
+else:
+    print(f"Index '{INDEX_NAME}' already exists.")
 
 def scrape_ai_tutorials():
     """Scrape AI tutorials from Analytics Vidhya"""
@@ -75,7 +78,6 @@ def scrape_ai_tutorials():
 
     return tutorials
 
-
 def scrape_ai_research_papers():
     """Scrape latest AI research papers from arXiv"""
     papers = []
@@ -107,7 +109,6 @@ def scrape_ai_research_papers():
 
     return papers
 
-
 def scrape_github_repos():
     """Scrape trending AI-related GitHub repositories"""
     repos = []
@@ -138,7 +139,6 @@ def scrape_github_repos():
 
     return repos
 
-
 def scrape_ai_courses():
     """Scrape AI courses from Coursera"""
     courses = [
@@ -159,7 +159,6 @@ def scrape_ai_courses():
         }
     ]
     return courses
-
 
 def scrape_ai_blog_posts():
     """Scrape AI-related blog posts"""
@@ -190,7 +189,6 @@ def scrape_ai_blog_posts():
         })
 
     return blogs
-
 
 # Aggregate all resources
 all_resources = []

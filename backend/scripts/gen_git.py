@@ -4,12 +4,20 @@ from datetime import datetime
 from elasticsearch import Elasticsearch, exceptions
 import json
 
-ES_HOST = 'http://127.0.0.1:9200'  # Update if necessary
+ES_HOST = 'https://kpc8psbuv0:tqi1g1t69r@learn-ai-4739164286.us-west-2.bonsaisearch.net'  # Update if necessary
 INDEX_NAME = 'ai_resources'
 
-# Initialize Elasticsearch client
-es = Elasticsearch(ES_HOST)
-
+# Connect to Elasticsearch
+es = Elasticsearch(
+    [ES_HOST],
+    use_ssl=True,
+    verify_certs=True,
+    ssl_show_warn=False,
+    request_timeout=30,
+    retry_on_timeout=True,
+    max_retries=10,
+    headers={"X-Elastic-Product": "Elasticsearch"}
+)
 def scrape_github_repos():
     """Scrape trending AI-related GitHub repositories"""
     repos = []

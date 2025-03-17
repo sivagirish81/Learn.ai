@@ -4,7 +4,7 @@ from datetime import datetime
 from elasticsearch import Elasticsearch, exceptions
 
 # Elasticsearch configuration
-ES_HOST = 'http://127.0.0.1:9200'
+ES_HOST = 'https://kpc8psbuv0:tqi1g1t69r@learn-ai-4739164286.us-west-2.bonsaisearch.net'
 INDEX_NAME = 'ai_resources'
 
 # URL for scraping
@@ -77,7 +77,16 @@ def scrape_towardsdatascience_articles():
 
 def push_data_to_elasticsearch(articles):
     """Push scraped articles to Elasticsearch"""
-    es = Elasticsearch(ES_HOST)
+    es = Elasticsearch(
+        [ES_HOST],
+        use_ssl=True,
+        verify_certs=True,
+        ssl_show_warn=False,
+        request_timeout=30,
+        retry_on_timeout=True,
+        max_retries=10,
+        headers={"X-Elastic-Product": "Elasticsearch"}
+    )
     
     # Check if Elasticsearch is connected
     try:
