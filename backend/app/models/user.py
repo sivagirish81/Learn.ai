@@ -3,11 +3,20 @@ from werkzeug.security import generate_password_hash, check_password_hash
 from elasticsearch import Elasticsearch
 from elasticsearch.exceptions import NotFoundError
 import jwt
+import os
 
 # Add JWT configuration
 JWT_SECRET = 'your-secret-key'  # In production, use environment variable
 
-es = Elasticsearch(['http://localhost:9200'])
+es = Elasticsearch([os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')],
+        use_ssl=True,
+        verify_certs=True,
+        ssl_show_warn=False,
+        request_timeout=30,
+        retry_on_timeout=True,
+        max_retries=10,
+        headers={"X-Elastic-Product": "Elasticsearch"}
+    )
 
 class UserValidationError(Exception):
     pass
