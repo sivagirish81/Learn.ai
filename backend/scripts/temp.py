@@ -2,16 +2,19 @@ import requests
 from bs4 import BeautifulSoup
 import json
 from datetime import datetime
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, exceptions
+import ssl
 
-ES_HOST = 'https://kpc8psbuv0:tqi1g1t69r@learn-ai-4739164286.us-west-2.bonsaisearch.net:9200'
+ES_HOST = 'https://kpc8psbuv0:tqi1g1t69r@learn-ai-4739164286.us-west-2.bonsaisearch.net'
 INDEX_NAME = 'ai_resources_1'
+
+
 
 # Connect to Elasticsearch
 es = Elasticsearch(
     [ES_HOST],
     use_ssl=True,
-    verify_certs=False,
+    verify_certs=True,
     ssl_show_warn=False,
     request_timeout=30,
     retry_on_timeout=True,
@@ -41,8 +44,14 @@ index_mapping = {
 }
 
 # Create the Elasticsearch index
-es.indices.create(index=INDEX_NAME, body=index_mapping)
-
+try:
+    es.indices.create(index=INDEX_NAME, body=index_mapping)
+    print(f"Index '{INDEX_NAME}' created successfully.")
+except exceptions.RequestError as e:
+    if e.error == 'resource_already_exists_exception':
+        print(f"Index '{INDEX_NAME}' already exists.")
+    else:
+        print(f"Error creating index '{INDEX_NAME}': {str(e)}")
 
 def scrape_ai_tutorials():
     """Scrape AI tutorials from Analytics Vidhya"""
@@ -75,7 +84,6 @@ def scrape_ai_tutorials():
 
     return tutorials
 
-
 def scrape_ai_research_papers():
     """Scrape latest AI research papers from arXiv"""
     papers = []
@@ -107,7 +115,6 @@ def scrape_ai_research_papers():
 
     return papers
 
-
 def scrape_github_repos():
     """Scrape trending AI-related GitHub repositories"""
     repos = []
@@ -138,7 +145,6 @@ def scrape_github_repos():
 
     return repos
 
-
 def scrape_ai_courses():
     """Scrape AI courses from Coursera"""
     courses = [
@@ -159,7 +165,6 @@ def scrape_ai_courses():
         }
     ]
     return courses
-
 
 def scrape_ai_blog_posts():
     """Scrape AI-related blog posts"""
@@ -191,7 +196,6 @@ def scrape_ai_blog_posts():
 
     return blogs
 
-
 # Aggregate all resources
 all_resources = []
 all_resources.extend(scrape_ai_tutorials())
@@ -201,6 +205,12 @@ all_resources.extend(scrape_ai_blog_posts())
 
 # Index the data in Elasticsearch
 for resource in all_resources:
-    es.index(index=INDEX_NAME, body=resource)
+    try:
+        es.index(index=INDEX_NAME, body=resource)
+        print(f"✅ Pushed '{resource['title']}' to Elasticsearch.")
+    except exceptions.ConnectionError as e:
+        print(f"❌ Error connecting to Elasticsearch: {str(e)}")
+    except exceptions.RequestError as e:
+        print(f"❌ Request error while pushing data: {str(e)}")
 
 print("✅ Elasticsearch index populated successfully!")

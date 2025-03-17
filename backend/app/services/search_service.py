@@ -1,9 +1,18 @@
 from elasticsearch import Elasticsearch
 from elasticsearch_dsl import Search, Q
+import os
 
 class SearchService:
     def __init__(self):
-        self.es = Elasticsearch(['http://127.0.0.1:9200'])
+        self.es = Elasticsearch([os.getenv('ELASTICSEARCH_URL')],
+            verify_certs=False,
+        ssl_show_warn=False,
+        request_timeout=30,
+        retry_on_timeout=True,
+        max_retries=10,
+        headers={"X-Elastic-Product": "Elasticsearch"} 
+    
+    )
     
     def search(self, query, category=None, tags=None, page=1, size=10):
         # Create search query

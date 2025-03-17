@@ -8,7 +8,15 @@ import os
 
 def get_elasticsearch_client():
     """Get Elasticsearch client with connection retry"""
-    es = Elasticsearch([os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')])
+    es = Elasticsearch([os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')],
+        use_ssl=True,
+        verify_certs=True,
+        ssl_show_warn=False,
+        request_timeout=30,
+        retry_on_timeout=True,
+        max_retries=10,
+        headers={"X-Elastic-Product": "Elasticsearch"}
+    )
     retry_count = 0
     max_retries = 3
     
