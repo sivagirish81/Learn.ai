@@ -54,6 +54,7 @@ def create_app():
     # Initialize Elasticsearch client
     es_host = os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200')
     es = Elasticsearch([es_host],
+        http_auth=(os.getenv('ELASTIC_USERNAME'), os.getenv('ELASTIC_PASSWORD')),
         use_ssl=True,
         verify_certs=True,
         ssl_show_warn=False,

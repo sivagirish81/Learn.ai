@@ -5,14 +5,14 @@ import os
 class SearchService:
     def __init__(self):
         self.es = Elasticsearch([os.getenv('ELASTICSEARCH_URL')],
+            http_auth=(os.getenv('ELASTIC_USERNAME'), os.getenv('ELASTIC_PASSWORD')),
             verify_certs=True,
             use_ssl=True,
-        ssl_show_warn=False,
-        request_timeout=30,
-        retry_on_timeout=True,
-        max_retries=10,
-        headers={"X-Elastic-Product": "Elasticsearch"} 
-    
+            ssl_show_warn=False,
+            request_timeout=30,
+            retry_on_timeout=True,
+            max_retries=10,
+            headers={"X-Elastic-Product": "Elasticsearch"} 
     )
     
     def search(self, query, category=None, tags=None, page=1, size=10):

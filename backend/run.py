@@ -10,4 +10,5 @@ if __name__ == '__main__':
     index_sample_data()
     
     # Run the Flask app
+    print(os.getenv('PORT', 10500))
     app.run(host="0.0.0.0", port=os.getenv('PORT', 10500))
