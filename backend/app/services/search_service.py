@@ -5,7 +5,8 @@ import os
 class SearchService:
     def __init__(self):
         self.es = Elasticsearch([os.getenv('ELASTICSEARCH_URL')],
-            verify_certs=False,
+            verify_certs=True,
+            use_ssl=True,
         ssl_show_warn=False,
         request_timeout=30,
         retry_on_timeout=True,
