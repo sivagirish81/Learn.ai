@@ -32,7 +32,7 @@ const Dashboard = () => {
     try {
       setLoading(true);
       const headers = getAuthHeaders();
-      const response = await fetch('http://127.0.0.1:5000/api/bookmarks', { headers });
+      const response = await fetch('https://learn-ai-n0cl.onrender.com/api/bookmarks', { headers });
       
       if (response.ok) {
         const data = await response.json();
@@ -53,7 +53,7 @@ const Dashboard = () => {
   const removeBookmark = async (resourceId) => {
     try {
       const headers = getAuthHeaders();
-      const response = await fetch(`http://127.0.0.1:5000/api/bookmarks/${resourceId}`, {
+      const response = await fetch(`https://learn-ai-n0cl.onrender.com/api/bookmarks/${resourceId}`, {
         method: 'DELETE',
         headers
       });

@@ -66,7 +66,7 @@ const KnowledgeHub = () => {
     try {
       setLoading(true);
       console.log('giigigis')
-      let url = 'http://127.0.0.1:5000/api/allresources?page=1&size=18';
+      let url = 'https://learn-ai-n0cl.onrender.com/api/allresources?page=1&size=18';
       if (category !== 'all') url += `&category=${category}`;
       if (resourceType !== 'all') url += `&resource_type=${resourceType}`;
       if (searchQuery) url += `&query=${encodeURIComponent(searchQuery)}`;
@@ -106,7 +106,7 @@ const KnowledgeHub = () => {
     
     try {
       const headers = getAuthHeaders();
-      const response = await fetch('http://127.0.0.1:5000/api/bookmarks', { headers });
+      const response = await fetch('https://learn-ai-n0cl.onrender.com/api/bookmarks', { headers });
       const data = await response.json();
       
       if (response.ok) {
@@ -128,7 +128,7 @@ const KnowledgeHub = () => {
     try {
       const method = bookmarks.has(resourceId) ? 'DELETE' : 'POST';
       const headers = getAuthHeaders();
-      const response = await fetch(`http://127.0.0.1:5000/api/bookmarks/${resourceId}`, {
+      const response = await fetch(`https://learn-ai-n0cl.onrender.com/api/bookmarks/${resourceId}`, {
         method,
         headers
       });

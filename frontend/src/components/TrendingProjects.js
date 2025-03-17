@@ -18,7 +18,7 @@ const TrendingProjects = () => {
 
   const fetchTrendingRepositories = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/github/trending');
+      const response = await fetch('https://learn-ai-n0cl.onrender.com/api/github/trending');
       const data = await response.json();
       if (response.ok) {
         setRepositories(data);

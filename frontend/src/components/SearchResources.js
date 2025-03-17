@@ -64,7 +64,7 @@ export default function SearchResources() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/categories');
+      const response = await fetch('https://learn-ai-n0cl.onrender.com/api/categories');
       if (response.ok) {
         const data = await response.json();
         setCategories(data.categories);
@@ -76,7 +76,7 @@ export default function SearchResources() {
 
   const fetchTags = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/tags');
+      const response = await fetch('https://learn-ai-n0cl.onrender.com/api/tags');
       if (response.ok) {
         const data = await response.json();
         setTags(data.tags);
@@ -99,7 +99,7 @@ export default function SearchResources() {
         ...(selectedTags.length > 0 && { tags: selectedTags.join(',') })
       });
 
-      const response = await fetch(`http://127.0.0.1:5000/api/search?${queryParams}`);
+      const response = await fetch(`https://learn-ai-n0cl.onrender.com/api/search?${queryParams}`);
       if (response.ok) {
         const data = await response.json();
         setResources(data.resources);
@@ -119,7 +119,7 @@ export default function SearchResources() {
     }
 
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/bookmarks/${resourceId}`, {
+      const response = await fetch(`https://learn-ai-n0cl.onrender.com/api/bookmarks/${resourceId}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

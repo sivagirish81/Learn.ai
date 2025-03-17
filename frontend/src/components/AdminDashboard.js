@@ -58,7 +58,7 @@ const AdminDashboard = () => {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('http://127.0.0.1:5000/api/admin/users', {
+      const response = await fetch('https://learn-ai-n0cl.onrender.com/api/admin/users', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -141,7 +141,7 @@ const AdminDashboard = () => {
 
   const handleDelete = async (type, id) => {
     try {
-      const response = await fetch(`http://127.0.0.1:5000/api/${type === 'user' ? 'admin/users' : 'resources'}/${id}`, {
+      const response = await fetch(`https://learn-ai-n0cl.onrender.com/api/${type === 'user' ? 'admin/users' : 'resources'}/${id}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
@@ -165,8 +165,8 @@ const AdminDashboard = () => {
     try {
       const { type, data } = editDialog;
       const endpoint = type === 'user' 
-        ? `http://127.0.0.1:5000/api/admin/users/${data.id}`
-        : `http://127.0.0.1:5000/api/admin/resources/${data.id}`;
+        ? `https://learn-ai-n0cl.onrender.com/api/admin/users/${data.id}`
+        : `https://learn-ai-n0cl.onrender.com/api/admin/resources/${data.id}`;
 
       const response = await fetch(endpoint, {
         method: 'PUT',

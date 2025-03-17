@@ -10,7 +10,7 @@ const AdvancedSearch = () => {
     const handleSearch = async (query) => {
         setLoading(true);
         try {
-            const response = await fetch(`http://127.0.0.1:5000/api/advsearch?query=${encodeURIComponent(query)}`);
+            const response = await fetch(`https://learn-ai-n0cl.onrender.com/api/advsearch?query=${encodeURIComponent(query)}`);
             const data = await response.json();
             setResults(data.results || []);
         } catch (error) {
