@@ -66,6 +66,7 @@ def create_app():
     # Check Elasticsearch connection
     try:
         if not es.ping():
+            print(os.getenv('ELASTICSEARCH_HOST', 'http://127.0.0.1:9200'))
             print("Error: Could not connect to Elasticsearch")
             print("Please make sure Elasticsearch is running on", es_host)
             sys.exit(1)
