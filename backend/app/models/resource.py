@@ -272,7 +272,7 @@ class Resource:
                         status=None, page=1, size=10):
         """Search for resources with filters"""
         try:
-            es = Elasticsearch()
+            #es = Elasticsearch()
             result = es.search(index=cls.index_name, body={
                 'query': query,
                 "_source": True,
