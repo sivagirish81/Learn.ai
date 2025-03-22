@@ -18,7 +18,7 @@ A Python-based web application that serves as a centralized search hub for AI-re
 - Elasticsearch 7.x
 - npm or yarn
 
-## Setup
+## Local Setup
 
 ### Backend Setup
 
@@ -66,16 +66,10 @@ npm start
 3. Filter results by category and tags
 4. Click on resources to view details
 
-## API Endpoints
-
-- GET /api/search - Search for resources
-- GET /api/categories - Get available categories
-- GET /api/tags - Get available tags
-
 ## Project Structure
 
 ```
-ai-learning-hub/
+LEARN.AI/
 ├── backend/
 │   ├── app/
 │   │   ├── __init__.py
@@ -88,7 +82,18 @@ ai-learning-hub/
     ├── public/
     ├── src/
     │   ├── components/
+    │   ├── contexts
     │   ├── services/
     │   └── App.js
     └── package.json
 ```
+
+## Deployment
+
+This project is deployed using Vercel, Render, and Bonsai Elastic for seamless hosting.
+
++ Vercel hosts the React Frontend.
++ Render hosts the Flask Backend.
++ Bonsai Elastic provides an Elasticsearch instance for storing all the app data.
+
+Deployment : [Learn.ai](https://learnai-rouge.vercel.app/)
